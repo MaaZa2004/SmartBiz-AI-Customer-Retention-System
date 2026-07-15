@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+envs/
+.env
+.env.local
+
+# Databases (SQLite development databases)
+*.db
+*.sqlite
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+smartbiz-ai/backend/test_ml_decision.db
+smartbiz-ai/backend/test_smartbiz.db
+smartbiz-ai/backend/smartbiz_dev.db
