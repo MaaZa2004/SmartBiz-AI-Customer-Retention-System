@@ -187,5 +187,52 @@ class DecisionEngine:
         
         return rec
 
+    def simulate(self, db: Session, payload) -> dict:
+        """
+        Runs the full prediction + recommendation pipeline on a transient,
+        non-persisted Customer object built from simulator input. Nothing
+        is written to the database — this is for what-if analysis only.
+        """
+        from app.models.models import Customer
+        
+        # Build an in-memory Customer instance WITHOUT adding it to the session
+        transient_customer = Customer(
+            id="SIMULATION",
+            name="Simulated Customer",
+            tenure=payload.tenure,
+            warehouse_to_home=payload.warehouse_to_home,
+            num_devices_registered=payload.num_devices_registered,
+            product_category=payload.product_category,
+            satisfaction_score=payload.satisfaction_score,
+            marital_status=payload.marital_status,
+            num_addresses=payload.num_addresses,
+            complain=payload.complain,
+            days_since_last_order=payload.days_since_last_order,
+            cashback_amount=payload.cashback_amount,
+        )
+
+        churn_res = ml_service.predict_customer_churn(transient_customer)
+        segment_res = ml_service.predict_customer_segment(transient_customer)
+        category = payload.product_category or "Others"
+        forecast_res = ml_service.predict_sales_forecast(category, db)
+
+        rec = self.generate_recommendation(
+            customer=transient_customer,
+            churn_risk=churn_res.risk_level,
+            segment=segment_res.segment,
+            trend=forecast_res.trend_direction
+        )
+
+        return {
+            "churn_probability": churn_res.churn_probability,
+            "risk_level": churn_res.risk_level,
+            "segment": segment_res.segment,
+            "segment_details": segment_res.details,
+            "recommendation_text": rec.recommendation_text,
+            "action_type": rec.action_type,
+            "priority": rec.priority,
+        }
+
 # Instantiate singleton decision engine
 decision_engine = DecisionEngine()
+

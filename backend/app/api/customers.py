@@ -44,15 +44,17 @@ def get_customer_details(
             detail=f"Customer with ID {customer_id} not found."
         )
         
+    from app.schemas.schemas import PredictionResponse, RecommendationResponse, SaleResponse
+    
     predictions = db.query(Prediction).filter(Prediction.customer_id == customer_id).order_by(Prediction.created_at.desc()).all()
     recommendations = db.query(Recommendation).filter(Recommendation.customer_id == customer_id).order_by(Recommendation.created_at.desc()).all()
     sales = db.query(Sale).filter(Sale.customer_id == customer_id).all()
     
     return {
-        "customer": customer,
-        "predictions": predictions,
-        "recommendations": recommendations,
-        "sales": sales
+        "customer": CustomerResponse.model_validate(customer),
+        "predictions": [PredictionResponse.model_validate(p) for p in predictions],
+        "recommendations": [RecommendationResponse.model_validate(r) for r in recommendations],
+        "sales": [SaleResponse.model_validate(s) for s in sales]
     }
 
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)

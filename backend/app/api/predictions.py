@@ -7,9 +7,12 @@ from app.models.models import Customer, Prediction
 from app.schemas.schemas import (
     ChurnPredictRequest, ChurnPredictResponse,
     SegmentPredictRequest, SegmentPredictResponse,
-    ForecastPredictRequest, ForecastPredictResponse
+    ForecastPredictRequest, ForecastPredictResponse,
+    SimulateRequest, SimulateResponse
 )
 from app.services.ml_services import ml_service
+from app.services.decision_engine import decision_engine
+
 
 router = APIRouter(prefix="/predict", tags=["Machine Learning Predictions"])
 
@@ -99,3 +102,24 @@ def predict_forecast(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Sales forecasting failed: {str(e)}"
         )
+
+@router.post("/simulate", response_model=SimulateResponse)
+def simulate_prediction(
+    payload: SimulateRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_authenticated)
+):
+    """
+    Stateless simulation endpoint for what-if analysis.
+    Runs churn prediction, segmentation, and decision engine recommendations 
+    on transient in-memory data without writing anything to the database.
+    """
+    try:
+        res = decision_engine.simulate(db, payload)
+        return res
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Simulation failed: {str(e)}"
+        )
+

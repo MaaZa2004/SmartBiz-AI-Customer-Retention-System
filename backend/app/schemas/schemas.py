@@ -158,3 +158,27 @@ class DashboardKPIs(BaseModel):
     active_customers: int
     churn_rate: float
     forecasted_sales: float
+
+# --- SIMULATION SCHEMAS ---
+
+class SimulateRequest(BaseModel):
+    tenure: int
+    warehouse_to_home: int
+    num_devices_registered: int
+    product_category: str
+    satisfaction_score: int
+    marital_status: str
+    num_addresses: int
+    complain: int
+    days_since_last_order: int
+    cashback_amount: float
+
+class SimulateResponse(BaseModel):
+    churn_probability: float
+    risk_level: str
+    segment: str
+    segment_details: dict
+    recommendation_text: str
+    action_type: str
+    priority: str
+

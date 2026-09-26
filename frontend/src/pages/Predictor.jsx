@@ -17,6 +17,7 @@ export const Predictor = () => {
 
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
+  const [error, setError] = useState(null);
 
   // Counter helpers
   const adjustCounter = (val, setter, min, max, delta) => {
@@ -31,53 +32,38 @@ export const Predictor = () => {
   const handlePredict = async () => {
     setLoading(true);
     setResults(null);
+    setError(null);
     try {
-      // 1. Create a simulated customer profile
-      const simId = `SIM-${Math.floor(100000 + Math.random() * 900000)}`;
-      const customerData = {
-        id: simId,
-        name: `Simulated Client (${simId})`,
-        gender: "Male",
-        age: 35,
+      const res = await api.predict.simulate({
         tenure: parseInt(tenure),
-        satisfaction_score: parseInt(satisfaction),
-        num_orders: 5,
-        total_spending: parseFloat((cashback * 10).toFixed(2)), // mock spend
-        last_purchase_date: new Date().toISOString().slice(0, 10),
-        product_category: category,
         warehouse_to_home: parseInt(distance),
+        num_devices_registered: parseInt(devices),
+        product_category: category,
+        satisfaction_score: parseInt(satisfaction),
         marital_status: maritalStatus,
         num_addresses: parseInt(addresses),
-        num_devices_registered: parseInt(devices),
+        complain: complain === 'Yes' ? 1 : 0,
         days_since_last_order: parseInt(daysSinceOrder),
         cashback_amount: parseFloat(cashback),
-        complain: complain === 'Yes' ? 1 : 0,
-        churn: 0
-      };
-
-      // Create simulated profile in DB (role check is ignored for creation or we assume analyst privileges)
-      // Note: In our auth core, creating a customer requires require_manager. 
-      // To bypass this for simulation, we can register the simulated customer profile
-      // or we could simulate it. Let's make sure it handles simulated customer.
-      // Wait, to bypass role restrictions for simulator, we can create the simulator profile
-      // under a simulation prefix, or write the simulator to create it. 
-      // If the user logs in as Analyst or Manager, Manager has write rights. Admin has everything.
-      // Let's assume the user is signed in with enough credentials or we can handle role restrictions.
-      await api.customers.create(customerData);
-
-      // 2. Trigger predictions
-      const churnRes = await api.predict.churn(simId);
-      const segmentRes = await api.predict.segment(simId);
-      const recRes = await api.decisionEngine.recommend(simId);
-
-      setResults({
-        churn: churnRes,
-        segment: segmentRes,
-        recommendation: recRes
       });
 
+      setResults({
+        churn: {
+          churn_probability: res.churn_probability,
+          risk_level: res.risk_level,
+        },
+        segment: {
+          segment: res.segment,
+          details: res.segment_details,
+        },
+        recommendation: {
+          recommendation_text: res.recommendation_text,
+          action_type: res.action_type,
+          priority: res.priority,
+        },
+      });
     } catch (err) {
-      alert("Simulation failed: " + err.message);
+      setError(err.message || "Simulation failed");
     } finally {
       setLoading(false);
     }
@@ -89,6 +75,16 @@ export const Predictor = () => {
         <h2 className="text-2xl font-bold tracking-tight text-dark-text">Customer Churn Simulator</h2>
         <p className="text-sm text-dark-textMuted mt-1">Configure client behavior attributes and run risk models in real-time</p>
       </header>
+
+      {error && (
+        <div className="mb-6 bg-danger/10 border border-danger/30 text-danger rounded-xl p-4 flex items-start space-x-3">
+          <ShieldAlert size={20} className="shrink-0 mt-0.5" />
+          <div className="text-sm">
+            <span className="font-semibold">Simulation Error: </span>
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Input Parameters panel */}

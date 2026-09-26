@@ -32,9 +32,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Root Endpoint
-@app.get("/")
-def read_root():
+# Health Endpoint
+@app.get("/health")
+def read_health():
     return {
         "status": "online",
         "message": "Welcome to SmartBiz AI Decision Intelligence System API",
@@ -54,5 +54,18 @@ app.include_router(decision_engine_router, prefix=settings.API_V1_STR)
 app.include_router(customers_router, prefix=settings.API_V1_STR)
 app.include_router(reports_router, prefix=settings.API_V1_STR)
 
+# Serve Frontend Static Files
+import os
+from fastapi.staticfiles import StaticFiles
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "frontend", "dist"))
+
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+else:
+    print(f"Warning: Frontend static directory not found at {frontend_dir}")
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+

@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL = "/api";
 
 const getHeaders = () => {
   const token = localStorage.getItem("token");
@@ -150,6 +150,29 @@ export const api = {
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err.detail || "Sales forecasting failed");
+      }
+      return await response.json();
+    },
+
+    simulate: async (payload) => {
+      const response = await fetch(`${API_BASE_URL}/predict/simulate`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        let msg = `Simulation failed (HTTP ${response.status})`;
+        try {
+          const err = await response.json();
+          if (typeof err.detail === "string") {
+            msg = err.detail;
+          } else if (Array.isArray(err.detail)) {
+            msg = err.detail.map(d => `${d.loc ? d.loc.slice(1).join(".") + ": " : ""}${d.msg}`).join("; ");
+          } else if (err.message) {
+            msg = err.message;
+          }
+        } catch (_) {}
+        throw new Error(msg);
       }
       return await response.json();
     }

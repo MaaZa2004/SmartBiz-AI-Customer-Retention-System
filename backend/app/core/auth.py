@@ -54,7 +54,7 @@ class RoleChecker:
 
 # Pre-defined role dependencies for clean usage in routes
 require_admin = RoleChecker(["Admin"])
-require_analyst = RoleChecker(["Admin", "Business Analyst"])
+require_analyst = RoleChecker(["Admin", "Business Analyst", "Manager"])
 require_manager = RoleChecker(["Admin", "Manager"])
 # Anyone who is authenticated can access general endpoints
 require_authenticated = get_current_user

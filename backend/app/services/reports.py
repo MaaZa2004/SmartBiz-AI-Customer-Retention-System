@@ -94,7 +94,7 @@ def generate_pdf_report(db: Session) -> bytes:
     
     total_revenue = db.query(Customer.total_spending).as_scalar()
     total_rev_val = db.query(Customer).value(Customer.total_spending.label("total"))
-    sum_rev = db.execute(db.query(Customer).with_entities(Customer.total_spending)).all()
+    sum_rev = db.query(Customer).with_entities(Customer.total_spending).all()
     total_spending_sum = sum(float(x[0]) for x in sum_rev if x[0] is not None)
     
     story.append(Paragraph("Executive Summary", section_heading))
@@ -194,7 +194,7 @@ def generate_excel_report(db: Session) -> bytes:
     churned_customers = db.query(Customer).filter(Customer.churn == 1).count()
     churn_rate = (churned_customers / total_customers * 100) if total_customers > 0 else 0.0
     
-    sum_rev = db.execute(db.query(Customer).with_entities(Customer.total_spending)).all()
+    sum_rev = db.query(Customer).with_entities(Customer.total_spending).all()
     total_spending_sum = sum(float(x[0]) for x in sum_rev if x[0] is not None)
     
     kpis = [
