@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
-from typing import List
+from typing import List, Union
 
 load_dotenv()
 
@@ -23,10 +24,16 @@ class Settings(BaseSettings):
     )
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = os.getenv(
-        "BACKEND_CORS_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000"
-    ).split(",")
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",") if i.strip()]
+        elif isinstance(v, list):
+            return v
+        return v
     
     # Rate Limiting
     RATE_LIMIT_LOGIN: str = "5 per minute"
